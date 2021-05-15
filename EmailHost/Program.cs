@@ -1,24 +1,43 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MassTransit;
+using Microsoft.Extensions.Configuration;
 
 namespace EmailHost
 {
     public class Program
     {
+        private static IConfiguration _configuration;
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
+            Host.CreateDefaultBuilder(args).
+            ConfigureHostConfiguration(configHost =>
+            {
+                configHost.AddJsonFile("appsettings.json");
+                _configuration = configHost.Build();
+            }).
+            ConfigureServices((hostContext, services) =>
+            {
+                services.AddMassTransit(x =>
                 {
-                    services.AddHostedService<Worker>();
+                    x.AddConsumer<ErrorMessageConsumer>();
+
+                    x.UsingRabbitMq((context, cfg) =>
+                    {
+                        cfg.ReceiveEndpoint("ratesApi-error-listener", e =>
+                        {
+                            e.ConfigureConsumer<ErrorMessageConsumer>(context);
+                        });
+                    });
                 });
+                services.AddMassTransitHostedService();
+                services.AddHostedService<Worker>();
+                services.AddSingleton<EmailService>();
+                services.Configure<SmtpSettings>(_configuration);
+            });
     }
 }
