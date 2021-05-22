@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
+using EmailHost.Consumers;
 
 namespace EmailHost
 {
@@ -24,13 +25,17 @@ namespace EmailHost
             {
                 services.AddMassTransit(x =>
                 {
+                    x.AddConsumer<SetupInfoConsumer>();
                     x.AddConsumer<ErrorMessageConsumer>();
-
                     x.UsingRabbitMq((context, cfg) =>
                     {
                         cfg.ReceiveEndpoint("ratesApi-error-listener", e =>
                         {
                             e.ConfigureConsumer<ErrorMessageConsumer>(context);
+                        });
+                        cfg.ReceiveEndpoint("setupInfo", e =>
+                        {
+                            e.ConfigureConsumer<SetupInfoConsumer>(context);
                         });
                     });
                 });
