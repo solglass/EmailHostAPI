@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Logging;
 
-namespace EmailHost
+namespace EmailHost.Consumers
 {
     public class ErrorMessageConsumer : IConsumer<ErrorMessage>
     {
