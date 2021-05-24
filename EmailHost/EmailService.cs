@@ -43,11 +43,11 @@ namespace EmailHost
 
             var emailMessage = new MimeMessage();
             emailMessage.From.Add(new MailboxAddress("Администрация сайта", _smtpSettings.From));
-            emailMessage.To.Add(new MailboxAddress("Витале Молодцу", "vit2013aly@mail.ru"));
+            emailMessage.To.Add(new MailboxAddress("Пользователю CRM", "vit2013aly@mail.ru"));
             emailMessage.Subject = "GoogleAuthenticator EntryKeys";
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
             {
-                Text = "<img src=" + qrCode + ">, <br />" + manualEntryKey + ""
+                Text = $"<img src={qrCode}>, <br />{manualEntryKey}"
             };
 
             using (var client = new SmtpClient())
