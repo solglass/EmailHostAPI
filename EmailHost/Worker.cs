@@ -16,13 +16,21 @@ namespace EmailHost
         {
             _logger = logger;
         }
-
+        public override Task StartAsync(CancellationToken cancellationToken)
+        {
+            return base.StartAsync(cancellationToken);
+        }
+        public override Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("The service has been stopped...");
+            return base.StopAsync(cancellationToken);
+        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(10000, stoppingToken);
+                await Task.Delay(3000, stoppingToken);
             }
         }
     }

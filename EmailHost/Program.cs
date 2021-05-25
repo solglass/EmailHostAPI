@@ -2,7 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
-using EmailHost.Consumers;
+using Serilog;
+using Serilog.Events;
+using System;
 
 namespace EmailHost
 {
@@ -11,14 +13,36 @@ namespace EmailHost
         private static IConfiguration _configuration;
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.File(@"C:\services\EmailHostService\LogFile.txt")
+                .CreateLogger();
+            try
+            {
+                Log.Information("Starting up the service");
+                CreateHostBuilder(args).Build().Run();
+                return;
+            }
+            catch(Exception ex)
+            {
+                Log.Fatal(ex, "An Error occured while starting the service");
+                return;
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args).
-            ConfigureHostConfiguration(configHost =>
+            Host.CreateDefaultBuilder(args)
+            .UseWindowsService()
+            .ConfigureHostConfiguration(configHost =>
             {
-                configHost.AddJsonFile("appsettings.json");
+                configHost.AddEnvironmentVariables();
                 _configuration = configHost.Build();
             }).
             ConfigureServices((hostContext, services) =>
@@ -43,6 +67,7 @@ namespace EmailHost
                 services.AddHostedService<Worker>();
                 services.AddSingleton<EmailService>();
                 services.Configure<SmtpSettings>(_configuration);
-            });
+            })
+            .UseSerilog();
     }
 }

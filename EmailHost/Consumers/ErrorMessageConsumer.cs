@@ -19,8 +19,17 @@ namespace EmailHost.Consumers
 
         public async Task Consume(ConsumeContext<ErrorMessage> context)
         {
-            _logger.LogInformation("Received Text: {Text}", context.Message.Value);
-            await _emailService.SendEmailAsync("yellowcucumber27@gmail.com", "An Error Occured", context.Message.Value);
+            try
+            {
+                _logger.LogInformation("Received Text: {Text}", context.Message.Value);
+                await _emailService.SendEmailAsync("educationsystem42@gmail.com", "An Error Occured", context.Message.Value);
+                _logger.LogInformation("Message sent on address: {address}", "educationsystem42@gmail.com");
+            }
+            catch
+            {
+                _logger.LogInformation("An error occured while sending the message");
+            }
+
         }
     }
 }
