@@ -13,47 +13,22 @@ namespace EmailHost
         {
             _smtpSettings = options.Value;
         }
-        public async Task SendEmailAsync(string email, string subject, string message)
+        public async Task SendEmailAsync(EmailMessage message)
         {
             var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _smtpSettings.From));
-            emailMessage.To.Add(new MailboxAddress("", email));
-            emailMessage.Subject = subject;
+            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _smtpSettings.EMAILSERVICE_ADMIN_EMAIL_ADDRESS));
+            emailMessage.To.Add(new MailboxAddress(message.ToName, message.ToEmail));
+            emailMessage.Subject = message.Subject;
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
             {
-                Text = message
+                Text = message.Body
             };
 
             using (var client = new SmtpClient())
             {
-                await client.ConnectAsync(_smtpSettings.SmtpServer, _smtpSettings.SmtpPort, true);
-                await client.AuthenticateAsync(_smtpSettings.Login, _smtpSettings.Password);
-                await client.SendAsync(emailMessage);
-
-                await client.DisconnectAsync(true);
-            }
-        }
-
-        public async Task SendEmailWithImageAsync(SetupCodeInfo setupInfo)
-        {
-            setupInfo.SendValue.TryGetValue("Account", out string email);
-            setupInfo.SendValue.TryGetValue("ManualEntryKey", out string manualEntryKey);
-            setupInfo.SendValue.TryGetValue("QrCodeSetupImageUrl", out string qrCode);
-
-            var emailMessage = new MimeMessage();
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", _smtpSettings.From));
-            emailMessage.To.Add(new MailboxAddress("Пользователю CRM", "vit2013aly@mail.ru"));
-            emailMessage.Subject = "GoogleAuthenticator EntryKeys";
-            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
-            {
-                Text = $"<img src={qrCode}>, <br />{manualEntryKey}"
-            };
-
-            using (var client = new SmtpClient())
-            {
-                await client.ConnectAsync(_smtpSettings.SmtpServer, _smtpSettings.SmtpPort, true);
-                await client.AuthenticateAsync(_smtpSettings.Login, _smtpSettings.Password);
+                await client.ConnectAsync(_smtpSettings.EMAILSERVICE_SMTPSERVER_ADDRESS, _smtpSettings.EMAILSERVICE_SMTPPORT, true);
+                await client.AuthenticateAsync(_smtpSettings.EMAILSERVICE_ADMIN_LOGIN, _smtpSettings.EMAILSERVICE_ADMIN_PASSWORD);
                 await client.SendAsync(emailMessage);
 
                 await client.DisconnectAsync(true);

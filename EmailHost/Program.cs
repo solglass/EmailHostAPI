@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 using System;
+using EmailHost.Consumers;
 
 namespace EmailHost
 {
@@ -17,7 +18,7 @@ namespace EmailHost
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
-                .WriteTo.File(@"C:\services\EmailHostService\LogFile.txt")
+                .WriteTo.File(@"C:\services\EmailHostService\Logs\LogFile.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
             try
             {
@@ -49,17 +50,12 @@ namespace EmailHost
             {
                 services.AddMassTransit(x =>
                 {
-                    x.AddConsumer<SetupInfoConsumer>();
-                    x.AddConsumer<ErrorMessageConsumer>();
+                    x.AddConsumer<EmailMessageConsumer>();
                     x.UsingRabbitMq((context, cfg) =>
                     {
-                        cfg.ReceiveEndpoint("ratesApi-error-listener", e =>
+                        cfg.ReceiveEndpoint("EmailMessages", e =>
                         {
-                            e.ConfigureConsumer<ErrorMessageConsumer>(context);
-                        });
-                        cfg.ReceiveEndpoint("setupInfo", e =>
-                        {
-                            e.ConfigureConsumer<SetupInfoConsumer>(context);
+                            e.ConfigureConsumer<EmailMessageConsumer>(context);
                         });
                     });
                 });
